@@ -567,8 +567,48 @@ def foodHeuristic(state, problem):
   Subsequent calls to this heuristic can access problem.heuristicInfo['wallCount']
   """
   position, foodGrid = state
-  "*** YOUR CODE HERE ***"
-  return 0
+  problem.heuristicInfo['wallCount'] = problem.walls.count()
+
+  xy1 = position
+  #xy2 = problem.goal
+  """
+  food_dists = []
+  for food_coord in foodGrid.asList():
+    xy2 = food_coord
+    dist = abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+    food_dists.append(dist)
+  return min(food_dists) if len(food_dists) > 0 else 0
+  13480 !
+  """
+
+  corners_remaining = set(foodGrid.asList())
+  if corners_remaining == set():
+    return 0
+
+  def sorted_corner_distances(position, corners_remaining):
+      xy1 = position
+      corner_distances = []
+      for corner_remaining in corners_remaining:
+          xy2 = corner_remaining
+          # manhattan does not work as good, not sure why
+          manhattan = abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+          # Euclidean works OK 1130 nodes expanded
+          #euclidean = ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
+          heur = manhattan
+          corner_distances.append((heur, corner_remaining))
+      corner_distances = sorted(corner_distances, key=lambda x: x[0])
+      return corner_distances
+
+  # extract closest:
+  corner_distances = sorted_corner_distances(position, corners_remaining)
+  cost, xy1 = corner_distances.pop()
+  while len(corner_distances) != 0:
+      corner_distances = sorted_corner_distances(xy1, [x[1] for x in corner_distances])
+      corner_cost, xy2 = corner_distances.pop()
+      inter_corner_distance = abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+      cost += inter_corner_distance
+      xy1 = xy2
+  return cost
 
 class ClosestDotSearchAgent(SearchAgent):
   "Search for all food using a sequence of searches"
